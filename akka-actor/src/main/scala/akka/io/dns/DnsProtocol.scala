@@ -31,6 +31,7 @@ object DnsProtocol {
   sealed trait RequestType
   final case class Ip(ipv4: Boolean = true, ipv6: Boolean = true) extends RequestType
   case object Srv extends RequestType
+  case object Txt extends RequestType
 
   /**
    * Java API
@@ -46,6 +47,11 @@ object DnsProtocol {
    * Java API
    */
   def srvRequestType(): RequestType = Srv
+
+  /**
+   * Java API
+   */
+  def txtRequestType(): RequestType = Txt
 
   /**
    * Sending this to the [[AsyncDnsManager]] will either lead to a [[Resolved]] or a [[akka.actor.Status.Failure]] response.

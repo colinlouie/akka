@@ -17,7 +17,7 @@ import akka.annotation.InternalApi
 import akka.io.SimpleDnsCache
 import akka.io.dns._
 import akka.io.dns.CachePolicy.{ Never, Ttl }
-import akka.io.dns.DnsProtocol.{ Ip, RequestType, Srv }
+import akka.io.dns.DnsProtocol.{ Ip, RequestType, Srv, Txt }
 import akka.io.dns.internal.DnsClient._
 import akka.pattern.{ ask, pipe }
 import akka.pattern.AskTimeoutException
@@ -191,6 +191,11 @@ private[io] final class AsyncDnsResolver(
 
       case Srv =>
         sendQuestion(resolver, SrvQuestion(nextId(), caseFoldedName)).map(answer => {
+          DnsProtocol.Resolved(name, answer.rrs, answer.additionalRecs)
+        })
+
+      case Txt =>
+        sendQuestion(resolver, TxtQuestion(nextId(), caseFoldedName)).map(answer => {
           DnsProtocol.Resolved(name, answer.rrs, answer.additionalRecs)
         })
     }

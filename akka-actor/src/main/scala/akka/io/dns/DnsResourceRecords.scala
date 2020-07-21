@@ -105,6 +105,25 @@ private[dns] object SRVRecord {
   }
 }
 
+final case class TXTRecord(override val name: String, override val ttl: Ttl, data: String)
+    extends ResourceRecord(name, ttl, RecordType.TXT.code, RecordClass.IN.code) {}
+
+/**
+ * INTERNAL API
+ */
+@InternalApi
+private[dns] object TXTRecord {
+
+  /**
+   * INTERNAL API
+   */
+  @InternalApi
+  def parseBody(name: String, ttl: Ttl, @unused length: Short, it: ByteIterator): TXTRecord = {
+    val dataLength = (it.getByte & 0xff).toShort
+    TXTRecord(name, ttl, it.clone().take(dataLength).map(_.toChar).mkString)
+  }
+}
+
 final case class UnknownRecord(
     override val name: String,
     override val ttl: Ttl,
@@ -158,6 +177,7 @@ private[dns] object ResourceRecord {
     (recType: @switch) match {
       case 1  => ARecord.parseBody(name, ttl, rdLength, data)
       case 5  => CNameRecord.parseBody(name, ttl, rdLength, data, msg)
+      case 16 => TXTRecord.parseBody(name, ttl, rdLength, data)
       case 28 => AAAARecord.parseBody(name, ttl, rdLength, data)
       case 33 => SRVRecord.parseBody(name, ttl, rdLength, data, msg)
       case _  => UnknownRecord.parseBody(name, ttl, recType, recClass, rdLength, data)

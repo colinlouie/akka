@@ -26,6 +26,7 @@ import akka.pattern.{ BackoffOpts, BackoffSupervisor }
   sealed trait DnsQuestion {
     def id: Short
   }
+  final case class TxtQuestion(id: Short, name: String) extends DnsQuestion
   final case class SrvQuestion(id: Short, name: String) extends DnsQuestion
   final case class Question4(id: Short, name: String) extends DnsQuestion
   final case class Question6(id: Short, name: String) extends DnsQuestion
@@ -64,6 +65,8 @@ import akka.pattern.{ BackoffOpts, BackoffSupervisor }
       stash()
     case _: SrvQuestion =>
       stash()
+    case _: TxtQuestion =>
+      stash()
   }
 
   private def message(name: String, id: Short, recordType: RecordType): Message = {
@@ -96,6 +99,13 @@ import akka.pattern.{ BackoffOpts, BackoffSupervisor }
     case SrvQuestion(id, name) =>
       log.debug("Resolving [{}] (SRV)", name)
       val msg = message(name, id, RecordType.SRV)
+      inflightRequests += (id -> (sender() -> msg))
+      log.debug("Message to [{}]: [{}]", ns, msg)
+      socket ! Udp.Send(msg.write(), ns)
+
+    case TxtQuestion(id, name) =>
+      log.debug("Resolving [{}] (TXT)", name)
+      val msg = message(name, id, RecordType.TXT)
       inflightRequests += (id -> (sender() -> msg))
       log.debug("Message to [{}]: [{}]", ns, msg)
       socket ! Udp.Send(msg.write(), ns)
